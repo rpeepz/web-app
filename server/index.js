@@ -23,16 +23,15 @@ app.use("/api/bookings", bookingRoutes);
 // const userRoutes = require("./routes/user");
 // app.use("/api/user", userRoutes);
 
+const geocodingRouter = require('./routes/geocoding');
+app.use('/api/geocoding', geocodingRouter);
 
 
 // MongoDB Connection
 const mongoURL = process.env.MONGO_URL;
 
 mongoose
-  .connect(mongoURL, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(mongoURL)
   .then(() => console.log("✅ MongoDB connected successfully"))
   .catch((error) => console.log(`❌ MongoDB connection error: ${error.message}`));
 

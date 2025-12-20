@@ -17,6 +17,7 @@ import ReservationListPage from "./pages/ReservationListPage";
 import ProfilePage from "./pages/ProfilePage";
 import WishListPage from "./pages/WishListPage";
 import MapBedsSearchPage from "./pages/MapBedsSearchPage";
+import BrowsePage from './pages/BrowsePage';
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
               <Route path="/" element={<ProtectedRoute> <DashboardPage /> </ProtectedRoute>} />
               <Route path="/add-property" element={<ProtectedRoute> <AddPropertyPage /> </ProtectedRoute>} />
               <Route path="/properties" element={<PropertyFeedPage />} />
+              <Route path="/browse" element={<BrowsePage />} />
               <Route path="/property/:id" element={<PropertyDetailPage />} />
               <Route path="/trips" element={<ProtectedRoute> <TripListPage /> </ProtectedRoute>} />
               <Route path="/my-listings" element={<ProtectedRoute> <HostListingsPage /> </ProtectedRoute>} />

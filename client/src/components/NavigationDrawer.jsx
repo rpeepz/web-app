@@ -7,6 +7,7 @@ import FavoriteIcon from "@mui/icons-material/Favorite";
 import HotelIcon from "@mui/icons-material/Hotel";
 import BusinessIcon from "@mui/icons-material/Business";
 import SettingsIcon from "@mui/icons-material/Settings";
+import PublicIcon from "@mui/icons-material/Public";
 import LogoutIcon from "@mui/icons-material/Logout";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import { useNavigate } from "react-router-dom";
@@ -22,44 +23,58 @@ export default function NavigationDrawer({ children }) {
 
   const handleLogout = () => {
     localStorage.clear();
+    setOpen(false);
     snackbar("Logged out successfully", "info");
     navigate("/login");
   };
+
+  const clickedIconLink = (link) => {
+    setOpen(false);
+    navigate(link);
+  }
 
   const drawer = (
     <div>
       <Toolbar />
       <Divider />
       <List>
-        <ListItemButton onClick={() => navigate("/")}>
+        <ListItemButton onClick={() => (clickedIconLink("/"))}>
           <ListItemIcon><HomeIcon /></ListItemIcon>
           <ListItemText primary="Dashboard" />
         </ListItemButton>
-        <ListItemButton onClick={() => navigate("/profile")}>
+        {/* <ListItemButton onClick={() => navigate("/profile")}>
+          <ListItemIcon><AccountCircleIcon /></ListItemIcon>
+          <ListItemText primary="Profile" />
+        </ListItemButton> */}
+        <ListItemButton onClick={() => (clickedIconLink("/profile"))}>
           <ListItemIcon><AccountCircleIcon /></ListItemIcon>
           <ListItemText primary="Profile" />
         </ListItemButton>
-        <ListItemButton onClick={() => navigate("/wishlist")}>
+        <ListItemButton onClick={() => (clickedIconLink("/wishlist"))}>
           <ListItemIcon><FavoriteIcon /></ListItemIcon>
           <ListItemText primary="Wishlist" />
         </ListItemButton>
-        <ListItemButton onClick={() => navigate("/properties")}>
+        <ListItemButton onClick={() => (clickedIconLink("/properties"))}>
           <ListItemIcon><HotelIcon /></ListItemIcon>
           <ListItemText primary="Browse Properties" />
         </ListItemButton>
-        <ListItemButton onClick={() => navigate("/my-listings")}>
+        <ListItemButton onClick={() => (clickedIconLink("/browse"))}>
+          <ListItemIcon><PublicIcon /></ListItemIcon>
+          <ListItemText primary="Map View" />
+        </ListItemButton>
+        <ListItemButton onClick={() => (clickedIconLink("/my-listings"))}>
           <ListItemIcon><BusinessIcon /></ListItemIcon>
           <ListItemText primary="My Listings" />
         </ListItemButton>
-        <ListItemButton onClick={() => navigate("/add-property")}>
+        <ListItemButton onClick={() => (clickedIconLink("/add-property"))}>
           <ListItemIcon><AddCircleIcon /></ListItemIcon>
           <ListItemText primary="Add Property" />
         </ListItemButton>
-        <ListItemButton onClick={() => navigate("/trips")}>
+        <ListItemButton onClick={() => (clickedIconLink("/trips"))}>
           <ListItemIcon><HotelIcon /></ListItemIcon>
           <ListItemText primary="My Trips" />
         </ListItemButton>
-        <ListItemButton onClick={() => navigate("/reservations")}>
+        <ListItemButton onClick={() => (clickedIconLink("/reservations"))}>
           <ListItemIcon><SettingsIcon /></ListItemIcon>
           <ListItemText primary="Reservations" />
         </ListItemButton>
@@ -72,7 +87,7 @@ export default function NavigationDrawer({ children }) {
   );
 
   return (
-    <Box sx={{ display: "flex" }}>
+    <Box sx={{ display: "flex"}}>
       <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar>
           <IconButton color="inherit" edge="start" onClick={() => setOpen(!open)} sx={{ mr: 2 }}>
@@ -88,7 +103,7 @@ export default function NavigationDrawer({ children }) {
         anchor="left"
         open={open}
         sx={{
-          width: drawerWidth,
+          width: 'auto',
           flexShrink: 0,
           [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: "border-box" },
         }}

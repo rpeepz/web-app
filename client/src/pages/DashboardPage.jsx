@@ -9,7 +9,7 @@ export default function DashboardPage() {
       <Typography variant="h3" mb={2}>Welcome, {user.firstName || "Guest"}!</Typography>
       <Typography variant="body1" mb={3}>
         This is your dashboard.<br /> 
-          <Button variant="contained" color="primary" href="/view" sx={{ mr: 2, mb: 2 }}>
+          <Button variant="contained" color="primary" href="/profile" sx={{ mr: 2, mb: 2 }}>
             View Profile
           </Button>
           <Button variant="contained" color="secondary" href="/wishlist" sx={{ mr: 2, mb: 2 }}>

@@ -3,6 +3,21 @@ const express = require('express');
 const fetch = require('node-fetch');
 const router = express.Router();
 
+
+// Middleware to enforce rate limiting (1 request per second)
+const rateLimit = (req, res, next) => {
+  const now = Date.now();
+  const lastRequest = req.session?.lastRequest || 0;
+  const delay = 1000; // 1 second in ms
+
+  if (now - lastRequest < delay) {
+    return res.status(429).json({ error: 'Rate limit exceeded. Please wait before making another request.' });
+  }
+
+  req.session.lastRequest = now;
+  next();
+};
+
 router.get('/search', async (req, res) => {
   const { q } = req.query;
   if (!q) {
@@ -15,7 +30,11 @@ router.get('/search', async (req, res) => {
     url.searchParams.set('format', 'json');
     url.searchParams.set('limit', '1');
 
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'property-rental-platform/1.0 (r.papagna.42@gmail.com)'
+      }
+    });
     const data = await response.json();
     
     if (!data.length) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { TextField, Button, IconButton, InputAdornment, Box, MenuItem, Typography, Chip } from "@mui/material";
+import { TextField, Button, IconButton, InputAdornment, Box, MenuItem, Typography, Chip, CircularProgress } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "../components/AppSnackbar";
 import LocationPicker from "../components/LocationPicker";
@@ -58,11 +58,13 @@ export default function AddPropertyPage() {
   const [addressError, setAddressError] = useState("");
   const [facilityInput, setFacilityInput] = useState("");
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [addressLoading, setAddressLoading] = useState(false);
   const navigate = useNavigate();
   const snackbar = useSnackbar();
 
   useEffect(() => {
     async function fetchAddress() {
+      setAddressLoading(true);
       if (form.position && form.position.length === 2) {
         try {
           const { city, country, address } = await reverseGeocode(form.position);
@@ -72,12 +74,14 @@ export default function AddPropertyPage() {
               city: city || prev.city,
               country: country || prev.country,
             }));
-            console.log('Reverse geocoded address:', address, city, country);
+            // console.log('Reverse geocoded address:', address, city, country);
           } catch (err) {
             console.error("Reverse geocoding failed:", err);
           }
         }
+        setAddressLoading(false);
       }
+
       fetchAddress();
   }, [form.position]);
 
@@ -112,7 +116,7 @@ export default function AddPropertyPage() {
       e.preventDefault();
     }
   }
-  //TODO add lat and long from given city and state
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.address || !form.position) {
@@ -120,30 +124,30 @@ export default function AddPropertyPage() {
       return;
     }
     setAddressError("");
-    console.log('Submitting form:', form);
-    // const token = localStorage.getItem("token");
-    // const data = new FormData();
-    // Object.entries(form).forEach(([key, val]) => {
-    //   if (key === "images") for (let file of val) data.append("images", file);
-    //   else if (key === "facilities") data.append("facilities", val.join(","));
-    //   else data.append(key, val);
-    // });
+    const token = localStorage.getItem("token");
+    const data = new FormData();
+    Object.entries(form).forEach(([key, val]) => {
+      if (key === "images") for (let file of val) data.append("images", file);
+      else if (key === "facilities") data.append("facilities", val.join(","));
+      else data.append(key, val);
+    });
 
 
-    // try {
-    //   const res = await fetch("http://localhost:3001/api/properties", {
-    //     method: "POST",
-    //     headers: { "Authorization": `Bearer ${token}` },
-    //     body: data
-    //   });
-    //   if (!res.ok) 
-    //     throw new Error("Failed to create property");
-    //   snackbar("Property added successfully");
-    //   navigate("/");
-    // } catch (err) {
-    //   snackbar("Failed to save property", "error");
-    //   setError(err.message);
-    // }
+    try {
+      const res = await fetch("http://localhost:3001/api/properties", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` },
+        body: data
+      });
+      console.log('Server response:', res);
+      if (!res.ok) 
+        throw new Error("Failed to save property");
+      snackbar("Property added successfully");
+      navigate("/");
+    } catch (err) {
+      snackbar("Failed to save property", "error");
+      setError(err.message);
+    }
   };
 
   return (
@@ -164,15 +168,19 @@ export default function AddPropertyPage() {
                     fullWidth 
                     required 
                     margin="normal" 
-                    value={form.address} 
+                    value={addressLoading ? 'Loading...' : (form.address || '')}
+                    disabled={addressLoading}
                     error={!!addressError}
                     helperText={addressError}
                     slotProps={{
                       input: { 
                         readOnly: true,
-                        endAdornment: (
+                        endAdornment: ( addressLoading ? (
                           <InputAdornment position="end">
-                            
+                           <CircularProgress size={20} />
+                          </InputAdornment>
+                        ) : (form.address &&
+                          <InputAdornment position="end">
                               <IconButton
                                 onClick={ () => setForm(prev => ({ 
                                   ...prev, address: "", position: null
@@ -181,7 +189,7 @@ export default function AddPropertyPage() {
                                 <ClearIcon />
                               </IconButton>
                           </InputAdornment>
-                        ),
+                        )),
                       },
                     }}
                     

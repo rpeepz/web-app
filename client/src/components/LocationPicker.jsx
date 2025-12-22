@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Circle, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { TextField, InputAdornment, IconButton, Button } from '@mui/material';
+import ClearIcon from '@mui/icons-material/Clear';
 
 // Fix default icon paths (bundler quirk)
 delete L.Icon.Default.prototype._getIconUrl;
@@ -68,21 +70,35 @@ export default function LocationPicker({ value, onChange }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {/* Address Search */}
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input
-                type="text"
-                placeholder="Search address / city / landmark"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                style={{ flex: 1, padding: '0.4rem 0.6rem' }}
-            />
-            <button
+            <TextField
+            placeholder="Search address / city / landmark"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            variant="outlined"
+            style={{ flex: 1 }}
+            slotProps={{
+                input: {
+                    endAdornment: query && (
+                        <InputAdornment position="end">
+                        <IconButton
+                            onClick={() => setQuery('')}
+                            edge="end"
+                        >
+                            <ClearIcon />
+                        </IconButton>
+                        </InputAdornment>
+                    ),
+                },
+            }}
+        />
+        <button
                 type="button"
                 onClick={handleAddressSearch}
                 disabled={loading}
             >
                 {loading ? 'Searching…' : 'Search'}
             </button>
-        </div>
+    </div>
 
       {/* Current coords display */}
     <div style={{ fontSize: '0.85rem', color: '#555' }}>

@@ -16,13 +16,15 @@ const upload = multer({ storage: storage });
 // Create property (Host only)
 router.post("/", verifyToken, upload.array("images", 6), async (req, res) => {
   try {
-    const { title, type, description, pricePerNight, address, maxGuests, facilities, category } = req.body;
+    const { title, type, description, pricePerNight, address, maxGuests, facilities, category, city, country } = req.body;
     const imagePaths = req.files?.map(file => `/uploads/${file.filename}`) || [];
     const property = new Property({
       ownerHost: req.user.id,
       title, type, description, pricePerNight, address, maxGuests,
       facilities: facilities ? facilities.split(",") : [],
       category,
+      city,
+      country,
       images: imagePaths,
     });
     await property.save();

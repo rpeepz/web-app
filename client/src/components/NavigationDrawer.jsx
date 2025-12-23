@@ -12,17 +12,28 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "../components/AppSnackbar";
-
+import { logout } from "../utils/api";
 
 const drawerWidth = 220;
+
+function isEmpty(obj) {
+  // First, check if the object is null or undefined
+  if (obj === null || typeof obj === 'undefined') {
+    return false; // It exists, just not as an object (or it's null/undefined)
+  }
+  
+  // Then, check the number of own properties
+  return Object.keys(obj).length === 0;
+};
 
 export default function NavigationDrawer({ children }) {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const snackbar = useSnackbar();
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-  const handleLogout = () => {
-    localStorage.clear();
+  const handleLogout = async () => {
+    await logout();
     setOpen(false);
     snackbar("Logged out successfully", "info");
     navigate("/login");
@@ -42,18 +53,44 @@ export default function NavigationDrawer({ children }) {
           <ListItemIcon><HomeIcon /></ListItemIcon>
           <ListItemText primary="Dashboard" />
         </ListItemButton>
-        {/* <ListItemButton onClick={() => navigate("/profile")}>
+        <ListItemButton onClick={() => (clickedIconLink(isEmpty(user) ? "/register" : "/profile"))}>
           <ListItemIcon><AccountCircleIcon /></ListItemIcon>
-          <ListItemText primary="Profile" />
-        </ListItemButton> */}
-        <ListItemButton onClick={() => (clickedIconLink("/profile"))}>
-          <ListItemIcon><AccountCircleIcon /></ListItemIcon>
-          <ListItemText primary="Profile" />
+          <ListItemText primary={isEmpty(user) ? "Register" : "Profile"} />
         </ListItemButton>
-        <ListItemButton onClick={() => (clickedIconLink("/wishlist"))}>
-          <ListItemIcon><FavoriteIcon /></ListItemIcon>
-          <ListItemText primary="Wishlist" />
-        </ListItemButton>
+        
+        {/* Guest-only menu items */}
+        {user.role === "guest" && (
+          <>
+            <ListItemButton onClick={() => (clickedIconLink("/wishlist"))}>
+              <ListItemIcon><FavoriteIcon /></ListItemIcon>
+              <ListItemText primary="Wishlist" />
+            </ListItemButton>
+            <ListItemButton onClick={() => (clickedIconLink("/trips"))}>
+              <ListItemIcon><HotelIcon /></ListItemIcon>
+              <ListItemText primary="My Trips" />
+            </ListItemButton>
+          </>
+        )}
+
+        {/* Host-only menu items */}
+        {user.role === "host" && (
+          <>
+            <ListItemButton onClick={() => (clickedIconLink("/my-listings"))}>
+              <ListItemIcon><BusinessIcon /></ListItemIcon>
+              <ListItemText primary="My Listings" />
+            </ListItemButton>
+            <ListItemButton onClick={() => (clickedIconLink("/add-property"))}>
+              <ListItemIcon><AddCircleIcon /></ListItemIcon>
+              <ListItemText primary="Add Property" />
+            </ListItemButton>
+            <ListItemButton onClick={() => (clickedIconLink("/reservations"))}>
+              <ListItemIcon><SettingsIcon /></ListItemIcon>
+              <ListItemText primary="Reservations" />
+            </ListItemButton>
+          </>
+        )}
+
+        {/* Available to both */}
         <ListItemButton onClick={() => (clickedIconLink("/properties"))}>
           <ListItemIcon><HotelIcon /></ListItemIcon>
           <ListItemText primary="Browse Properties" />
@@ -62,22 +99,7 @@ export default function NavigationDrawer({ children }) {
           <ListItemIcon><PublicIcon /></ListItemIcon>
           <ListItemText primary="Map View" />
         </ListItemButton>
-        <ListItemButton onClick={() => (clickedIconLink("/my-listings"))}>
-          <ListItemIcon><BusinessIcon /></ListItemIcon>
-          <ListItemText primary="My Listings" />
-        </ListItemButton>
-        <ListItemButton onClick={() => (clickedIconLink("/add-property"))}>
-          <ListItemIcon><AddCircleIcon /></ListItemIcon>
-          <ListItemText primary="Add Property" />
-        </ListItemButton>
-        <ListItemButton onClick={() => (clickedIconLink("/trips"))}>
-          <ListItemIcon><HotelIcon /></ListItemIcon>
-          <ListItemText primary="My Trips" />
-        </ListItemButton>
-        <ListItemButton onClick={() => (clickedIconLink("/reservations"))}>
-          <ListItemIcon><SettingsIcon /></ListItemIcon>
-          <ListItemText primary="Reservations" />
-        </ListItemButton>
+        
         <ListItemButton onClick={handleLogout}>
           <ListItemIcon><LogoutIcon /></ListItemIcon>
           <ListItemText primary="Logout" />

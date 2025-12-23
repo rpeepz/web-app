@@ -3,20 +3,18 @@ import { Box, Typography, Grid, Card, CardMedia, CardContent, IconButton } from 
 import FavoriteIcon from "@mui/icons-material/Favorite";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "../components/AppSnackbar";
+import { fetchWithAuth } from "../utils/api";
 
 export default function WishListPage() {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
-  const token = localStorage.getItem("token");
   const navigate = useNavigate();
   const snackbar = useSnackbar();
 
   useEffect(() => {
     async function fetchWishlist() {
       try {
-        const userRes = await fetch("http://localhost:3001/api/auth/me", {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
+        const userRes = await fetchWithAuth("http://localhost:3001/api/auth/me");
         const user = await userRes.json();
         if (!user.wishList?.length) return setProperties([]);
         // Fetch each property in parallel
@@ -31,12 +29,11 @@ export default function WishListPage() {
       }
     }
     fetchWishlist();
-  }, [token]);
+  }, []);
 
   const handleRemove = async (propId) => {
-    const res = await fetch(`http://localhost:3001/api/properties/${propId}/wishlist`, {
-      method: "DELETE",
-      headers: { "Authorization": `Bearer ${token}` }
+    const res = await fetchWithAuth(`http://localhost:3001/api/properties/${propId}/wishlist`, {
+      method: "DELETE"
     });
     if (res.ok) {
       setProperties(prev => prev.filter(p => p._id !== propId));

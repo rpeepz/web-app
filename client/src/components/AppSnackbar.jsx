@@ -1,10 +1,14 @@
 import React, { createContext, useContext, useState } from "react";
 import { Snackbar, Alert } from "@mui/material";
 
-const SnackbarContext = createContext();
+const SnackbarContext = createContext(null);
 
 export function useSnackbar() {
-  return useContext(SnackbarContext);
+  const context = useContext(SnackbarContext);
+  if (!context) {
+    throw new Error("useSnackbar must be used within a SnackbarProvider");
+  }
+  return context;
 }
 
 export function SnackbarProvider({ children }) {

@@ -5,6 +5,7 @@ import FavoriteBorderIcon from "@mui/icons-material/FavoriteBorder";
 import IconButton from "@mui/material/IconButton";
 import PropertySearchBar from "../components/PropertySearchBar";
 import { useSnackbar } from "../components/AppSnackbar";
+import { fetchWithAuth, formatPriceDisplay } from "../utils/api";
 
 export default function PropertyFeedPage() {
   const [properties, setProperties] = useState([]);
@@ -12,29 +13,26 @@ export default function PropertyFeedPage() {
   
   const [wishlist, setWishlist] = useState([]);
   const user = JSON.parse(localStorage.getItem("user") || "{}");
-  const token = localStorage.getItem("token");
   const snackbar = useSnackbar();
   
   // Fetch user's wishlist on mount
   useEffect(() => {
     if (!user?.id) return;
-    fetch("http://localhost:3001/api/auth/me", {
-        headers: { "Authorization": `Bearer ${token}` }
-    })
+    fetchWithAuth("http://localhost:3001/api/auth/me")
         .then(res => res.json())
         .then(data => setWishlist(data.wishList || []));
-  }, [user.id, token]);
+  }, [user.id]);
 
   
 
   const handleToggleWishlist = async (propertyId) => {
-    if (!token) return; // Optionally show login prompt/toast
-    const inWishlist = wishlist.includes(propertyId);
-    const method = inWishlist ? "DELETE" : "POST";
-    const res = await fetch(`http://localhost:3001/api/properties/${propertyId}/wishlist`, {
-        method,
-        headers: { "Authorization": `Bearer ${token}` }
-      });
+    if (!user?.id) { // User not logged in
+      snackbar("Must be logged in to add to your wishlist", "error")
+      return;
+  }
+  const inWishlist = wishlist.includes(propertyId);
+  const method = inWishlist ? "DELETE" : "POST";
+    const res = await fetchWithAuth(`http://localhost:3001/api/properties/${propertyId}/wishlist`);
     if (res.ok) {
       setWishlist(prev => {
         if (inWishlist) {
@@ -54,7 +52,11 @@ export default function PropertyFeedPage() {
   useEffect(() => {
     fetch("http://localhost:3001/api/properties")
       .then(res => res.json())
-      .then(data => setProperties(data));
+      .then(data => {
+        // Filter to show only active properties to guests
+        const activeProperties = data.filter(prop => prop.isActive !== false);
+        setProperties(activeProperties);
+      });
   }, []);
 
   return (
@@ -65,19 +67,17 @@ export default function PropertyFeedPage() {
         {filtered.map(prop => (
           <Grid item xs={12} sm={6} md={4} key={prop._id}>
             <Card>
-                
-
               <CardMedia
                 component="img"
                 height="160"
-                image={`http://localhost:3001${prop.images?.[0]}` || "https://mui.com/static/images/cards/contemplative-reptile.jpg"}
+                image={`http://localhost:3001${prop.images?.[0]?.path || prop.images?.[0]}` || "https://mui.com/static/images/cards/contemplative-reptile.jpg"}
                 alt={prop.title}
               />
               <CardContent>
                 <Typography variant="h6">{prop.title}</Typography>
                 <Typography color="text.secondary">{prop.category} – {prop.type}</Typography>
                 <Typography variant="body2">{prop.address}</Typography>
-                <Typography variant="body2">${prop.pricePerNight}/night</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>{formatPriceDisplay(prop)}</Typography>
                 <Typography variant="body2">{prop.facilities?.join(", ")}</Typography>
               </CardContent>
               

@@ -12,12 +12,12 @@ export default function DashboardPage() {
           <Button variant="contained" color="primary" href="/profile" sx={{ mr: 2, mb: 2 }}>
             View Profile
           </Button>
-          <Button variant="contained" color="secondary" href="/wishlist" sx={{ mr: 2, mb: 2 }}>
+          {/* <Button variant="contained" color="secondary" href="/wishlist" sx={{ mr: 2, mb: 2 }}>
             My Wishlist
-          </Button>
+          </Button> */}
           {user.role === "host" && (
-            <Button variant="contained" color="success" href="/host/dashboard" sx={{ mr: 2, mb: 2 }}>
-              Host Dashboard
+            <Button variant="contained" color="success" href="/my-listings" sx={{ mr: 2, mb: 2 }}>
+              My Listings
             </Button>
           )}
         - Guests: Browse properties and make bookings.<br />

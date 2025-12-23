@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Box, TextField, Button, Typography, Avatar } from "@mui/material";
 import { useSnackbar } from "../components/AppSnackbar";
+import { fetchWithAuth } from "../utils/api";
 
 export default function ProfilePage() {
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
@@ -14,12 +15,10 @@ export default function ProfilePage() {
 
   const handleSubmit = async e => {
     e.preventDefault();
-    const token = localStorage.getItem("token");
-    const res = await fetch("http://localhost:3001/api/auth/profile", {
+    const res = await fetchWithAuth("http://localhost:3001/api/auth/profile", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
       },
       body: JSON.stringify(form)
     });

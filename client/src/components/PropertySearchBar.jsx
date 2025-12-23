@@ -6,7 +6,7 @@ const categories = [
 ];
 const types = [
   { value: "", label: "Any" },
-  { value: "whole", label: "Whole Property" },
+  { value: "accommodation", label: "Accommodation" },
   { value: "private", label: "Private Room" },
   { value: "bed", label: "Individual Bed" }
 ];

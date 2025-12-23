@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { TextField, Button, IconButton, InputAdornment, Box, MenuItem, Typography, Chip, CircularProgress } from "@mui/material";
+import { TextField, Button, IconButton, InputAdornment, Box, MenuItem, Typography, Chip, CircularProgress, Alert } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "../components/AppSnackbar";
 import LocationPicker from "../components/LocationPicker";
+import RoomBedsConfigurator from "../components/RoomBedsConfigurator";
 import ClearIcon from '@mui/icons-material/Clear';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { fetchWithAuth } from "../utils/api";
 
 async function reverseGeocode([lat, lng]) {
   const url = `https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`;
@@ -16,33 +19,13 @@ async function reverseGeocode([lat, lng]) {
     console.log("No address features data found");
     return {};
   }
-  // console.log('DATA FEATURES:', data.features[0].properties);
   const {city, country, name: address} = data.features[0].properties
-  /*
-  city : "Plantation",
-  country : "United States",
-  countrycode : "US",
-  county : "Broward County",
-  extent : (4) [-80.2225091, 26.128197, -80.2223404, 26.1234056],
-  locality : "Plantation Park",
-  name : "Bayberry Drive",
-  osm_id : 10802874,
-  osm_key : "highway",
-  osm_type : "W",
-  osm_value : "residential",
-  postcode : "33317",
-  state : "Florida",
-  type : "street",
-  */
-  return {city, country, address}; ;
-  
+  return {city, country, address};
 }
-
-
 
 const categories = ["apartment", "condo", "house", "hostel", "flat", "villa"];
 const types = [
-  { value: "whole", label: "Whole Property" },
+  { value: "accommodation", label: "Accommodation" },
   { value: "private", label: "Private Room" },
   { value: "bed", label: "Individual Bed" }
 ];
@@ -52,7 +35,7 @@ export default function AddPropertyPage() {
   const [form, setForm] = useState({
     title: "", type: "", category: "", description: "",
     pricePerNight: "", city: "", country:"", maxGuests: "",
-    facilities: [], images: [], address: ""
+    facilities: [], images: [], address: "", rooms: []
   });
   const [error, setError] = useState("");
   const [addressError, setAddressError] = useState("");
@@ -63,7 +46,7 @@ export default function AddPropertyPage() {
   const snackbar = useSnackbar();
 
   useEffect(() => {
-    async function fetchAddress() {
+    const fetchAddress = async () => {
       setAddressLoading(true);
       if (form.position && form.position.length === 2) {
         try {
@@ -80,9 +63,9 @@ export default function AddPropertyPage() {
           }
         }
         setAddressLoading(false);
-      }
+    };
 
-      fetchAddress();
+    fetchAddress();
   }, [form.position]);
 
   const handleInputChange = (e) => {
@@ -108,14 +91,47 @@ export default function AddPropertyPage() {
   };
 
   const handleImageChange = (e) => {
-    setForm({ ...form, images: [...e.target.files] });
-    setImagePreviews([...e.target.files].map(file => URL.createObjectURL(file)));
+    const MAX_IMAGES = 6;
+    const newFiles = Array.from(e.target.files);
+    const currentImageCount = form.images.length;
+    const availableSlots = MAX_IMAGES - currentImageCount;
+    
+    if (availableSlots <= 0) {
+      snackbar(`You have reached the maximum of ${MAX_IMAGES} images.`, "warning");
+      return;
+    }
+    
+    if (newFiles.length > availableSlots) {
+      snackbar(`Only ${availableSlots} more image(s) can be added. Uploading ${availableSlots} of ${newFiles.length} selected.`, "warning");
+      newFiles.splice(availableSlots);
+    }
+    
+    const combinedImages = [...form.images, ...newFiles];
+    setForm({ ...form, images: combinedImages });
+    setImagePreviews([...imagePreviews, ...newFiles.map(file => URL.createObjectURL(file))]);
   };
+
+  const handleImageRemove = (indexToRemove) => {
+    setForm(prev => ({
+      ...prev,
+      images: prev.images.filter((_, idx) => idx !== indexToRemove)
+    }));
+    setImagePreviews(prev => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
     }
   }
+
+  const handleRoomsChange = (newRooms) => {
+    setForm({ ...form, rooms: newRooms });
+  };
+
+  const handleSimplePriceChange = (price) => {
+    setForm({ ...form, pricePerNight: price });
+  };
   
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -123,23 +139,29 @@ export default function AddPropertyPage() {
       setAddressError("Please select a location on the map.");
       return;
     }
+    if (form.type === "accommodation" && !form.maxGuests) {
+      setError("Max guests is required for whole home listings.");
+      return;
+    }
+    if (form.rooms.length === 0) {
+      setError("Please add at least one room with beds to activate your property.");
+      return;
+    }
     setAddressError("");
-    const token = localStorage.getItem("token");
     const data = new FormData();
     Object.entries(form).forEach(([key, val]) => {
       if (key === "images") for (let file of val) data.append("images", file);
       else if (key === "facilities") data.append("facilities", val.join(","));
-      else data.append(key, val);
+      else if (key === "rooms") data.append("rooms", JSON.stringify(val));
+      else if (key !== "position") data.append(key, val);
     });
 
-
     try {
-      const res = await fetch("http://localhost:3001/api/properties", {
+      const res = await fetchWithAuth("http://localhost:3001/api/properties", {
         method: "POST",
-        headers: { "Authorization": `Bearer ${token}` },
         body: data
       });
-      console.log('Server response:', res);
+      // console.log('Server response:', res);
       if (!res.ok) 
         throw new Error("Failed to save property");
       snackbar("Property added successfully");
@@ -151,11 +173,36 @@ export default function AddPropertyPage() {
   };
 
   return (
-    <Box sx={{ maxWidth: 600, mx: "auto", p: 3 }}>
+    <Box sx={{ maxWidth: 700, mx: "auto", p: 3 }}>
       <Typography variant="h5" mb={2}>Add New Property</Typography>
+      
+      <Alert severity="info" sx={{ mb: 3 }}>
+        <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 0.5 }}>
+          📋 Complete Basic Info & Configure Rooms
+        </Typography>
+        <Typography variant="body2">
+          You can add more details like specific pricing per bed, max guests, and additional amenities after configuring your property. Once you add at least one room with beds, your property will be activated and visible to guests.
+        </Typography>
+      </Alert>
+
       <form onSubmit={handleSubmit} onKeyDown={handleKeyDown} encType="multipart/form-data">
-        <TextField label="Title" name="title" fullWidth required margin="normal" value={form.title} onChange={handleInputChange} />
-        <TextField select label="Type" name="type" fullWidth required margin="normal" value={form.type} onChange={handleInputChange}>
+        <TextField label="Title" placeholder="Private Room / Bunk Bed" name="title" fullWidth required margin="normal" value={form.title} onChange={handleInputChange} />
+        <TextField 
+          select 
+          label="Type" 
+          name="type" 
+          fullWidth 
+          required 
+          margin="normal" 
+          value={form.type} 
+          onChange={handleInputChange}
+          helperText={
+            form.type === "accommodation" ? "Entire home - Configure multiple rooms and beds, pricing per night"
+            : form.type === "private" ? "Single private room - Only 1 room with configurable beds"
+            : form.type === "bed" ? "Individual bed - Only 1 room with 1 bed"
+            : "Select a type to get started"
+          }
+        >
           {types.map(t => <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>)}
         </TextField>
         <TextField select label="Category" name="category" fullWidth margin="normal" value={form.category} onChange={handleInputChange}>
@@ -164,6 +211,7 @@ export default function AddPropertyPage() {
         <TextField label="Description" name="description" fullWidth required multiline rows={3} margin="normal" value={form.description} onChange={handleInputChange} />
         
         <TextField  label="Approximate Address"
+                    placeholder="Please select location on map"
                     name="address" 
                     fullWidth 
                     required 
@@ -202,8 +250,8 @@ export default function AddPropertyPage() {
         </div>
 
 
-        <TextField label="Price per Night" name="pricePerNight" fullWidth required margin="normal" type="number" value={form.pricePerNight} onChange={handleInputChange} />
-        <TextField label="Max Guests" name="maxGuests" fullWidth required margin="normal" type="number" value={form.maxGuests} onChange={handleInputChange} />
+        <TextField label="Price per Night (optional for now)" name="pricePerNight" fullWidth margin="normal" type="number" value={form.pricePerNight} onChange={handleInputChange} inputProps={{ placeholder: "Can be updated later" }} />
+        <TextField label="Max Guests" name="maxGuests" fullWidth margin="normal" type="number" value={form.maxGuests} onChange={handleInputChange} inputProps={{ placeholder: "Can be updated later" }} required={form.type === "accommodation"} helperText={form.type === "accommodation" ? "Required for whole home listings" : "Optional for now"} />
         <Box mt={2} mb={2}>
           <TextField
             label="Add Facility"
@@ -211,6 +259,7 @@ export default function AddPropertyPage() {
             onChange={e => setFacilityInput(e.target.value)}
             onKeyDown={handleFacilities}
             helperText="Press Enter to add"
+            fullWidth
           />
           <Box display="flex" flexWrap="wrap" mt={1}>
             {form.facilities.map(facility => (
@@ -224,12 +273,28 @@ export default function AddPropertyPage() {
         </Button>
         <Box display="flex" flexWrap="wrap" mb={2}>
           {imagePreviews.map((src, idx) => (
-            <Box key={idx} sx={{ mr: 2 }}>
+            <Box key={idx} sx={{ mr: 2, position: 'relative' }}>
               <img src={src} alt={`preview-${idx}`} width={80} height={60} style={{ objectFit: "cover", borderRadius: 8 }} />
+              <IconButton
+                onClick={() => handleImageRemove(idx)}
+                sx={{ position: 'absolute', top: 0, right: 0, color: 'white', backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+              >
+                <DeleteIcon />
+              </IconButton>
             </Box>
           ))}
         </Box>
-        <Button type="submit" variant="contained" color="primary" fullWidth>Add Property</Button>
+
+        {/* Room & Beds Configurator */}
+        <RoomBedsConfigurator 
+          rooms={form.rooms} 
+          onChange={handleRoomsChange} 
+          propertyType={form.type}
+          simplePrice={form.pricePerNight}
+          onSimplePriceChange={handleSimplePriceChange}
+        />
+
+        <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 3 }}>Add Property</Button>
         {error && <Typography color="error" mt={2}>{error}</Typography>}
       </form>
     </Box>

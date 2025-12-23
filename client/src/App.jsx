@@ -16,7 +16,6 @@ import HostListingsPage from "./pages/HostListingsPage";
 import ReservationListPage from "./pages/ReservationListPage";
 import ProfilePage from "./pages/ProfilePage";
 import WishListPage from "./pages/WishListPage";
-import MapBedsSearchPage from "./pages/MapBedsSearchPage";
 import BrowsePage from './pages/BrowsePage';
 
 function App() {
@@ -33,12 +32,11 @@ function App() {
               <Route path="/properties" element={<PropertyFeedPage />} />
               <Route path="/browse" element={<BrowsePage />} />
               <Route path="/property/:id" element={<PropertyDetailPage />} />
-              <Route path="/trips" element={<ProtectedRoute> <TripListPage /> </ProtectedRoute>} />
+              <Route path="/trips" element={<ProtectedRoute requiredRole="guest"> <TripListPage /> </ProtectedRoute>} />
               <Route path="/my-listings" element={<ProtectedRoute> <HostListingsPage /> </ProtectedRoute>} />
               <Route path="/reservations" element={<ProtectedRoute> <ReservationListPage /> </ProtectedRoute>} />
               <Route path="/profile" element={<ProtectedRoute> <ProfilePage /> </ProtectedRoute>} />
               <Route path="/wishlist" element={<ProtectedRoute> <WishListPage /> </ProtectedRoute>} />
-              <Route path="/map-beds" element={<MapBedsSearchPage />} />
               <Route path="*" element={<Navigate to="/login" />} />
             </Routes>
           </NavigationDrawer>

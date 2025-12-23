@@ -50,7 +50,7 @@ export default function RegisterPage() {
       snackbar(`Registration successful, email: ${form.email}`, "success");
       navigate("/login");
     } catch (err) {
-      snaakbar(err.message, "error");
+      snackbar(err.message, "error");
       setError(err.message);
     }
   };

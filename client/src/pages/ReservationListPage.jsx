@@ -1,17 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Box, Typography, Card, CardContent, CardMedia, Grid } from "@mui/material";
+import { fetchWithAuth } from "../utils/api";
 
 export default function ReservationListPage() {
   const [bookings, setBookings] = useState([]);
-  const token = localStorage.getItem("token");
 
   useEffect(() => {
-    fetch("http://localhost:3001/api/bookings/host", {
-      headers: { "Authorization": `Bearer ${token}` }
-    })
+    fetchWithAuth("http://localhost:3001/api/bookings/host")
       .then(res => res.json())
       .then(setBookings);
-  }, [token]);
+  }, []);
 
   return (
     <Box sx={{ maxWidth: 1100, mx: "auto", mt: 4 }}>
